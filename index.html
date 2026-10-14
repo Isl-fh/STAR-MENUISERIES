@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>STAR MENUISERIES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/extra.css"></head><body><div id="hdr"></div><div class="wrap" id="bk"></div>
+<section class="hero"><canvas id="sky"></canvas><div class="wrap"><div><h1 data-i18n="hero_t"></h1><p data-i18n="hero_s"></p><a class="btn solid" href="cuisine.html" data-i18n="discover"></a></div><div class="stack" id="stack"></div></div></section>
+<div class="band"><div id="band"></div></div>
+<section class="s"><div class="wrap"><div class="title"><h2 data-i18n="cats"></h2></div><div class="cats" id="cats"></div></div></section>
+<section class="s" style="background:var(--wood)"><div class="wrap demo"><div class="pic" id="dpic"></div><div><h2 data-i18n="demo_t"></h2><p data-i18n="demo_s"></p><div class="sw" id="dsw"></div><div class="cta"><a class="btn solid" href="cuisine.html" data-i18n="view3d"></a></div></div></div></section>
+<section class="s"><div class="wrap"><div class="title"><h2 data-i18n="feat"></h2></div><div class="grid" id="feat"></div></div></section>
+<section class="s" style="background:var(--wood)"><div class="wrap values"><div><span class="vi">✦</span><h3 data-i18n="v1"></h3><p data-i18n="v1t"></p></div><div><span class="vi">✦</span><h3 data-i18n="v2"></h3><p data-i18n="v2t"></p></div><div><span class="vi">✦</span><h3 data-i18n="v3"></h3><p data-i18n="v3t"></p></div></div></section>
+<section class="night"><div class="wrap"><h2 data-i18n="contact_t"></h2><a class="btn solid" href="commande.html" data-i18n="order"></a></div></section>
+<div id="ftr"></div><script src="js/data.js"></script><script src="js/art.js"></script><script src="js/app.js"></script><script src="js/stars.js"></script>
+<script>let dc='ivoire';const byId=i=>STAR.products.find(p=>p.id===i);
+function demo(){const p=byId('k1');dpic.innerHTML=illus(p,{f:dc});dsw.innerHTML=STAR.colors.map(c=>`<button title="${L(c)}" aria-label="${L(c)}" class="${c.id===dc?'on':''}" style="background:${c.hex}" onclick="dc='${c.id}';demo()"></button>`).join('')}
+boot(()=>{const cs=Object.keys(STAR.cats);
+ stack.innerHTML='<div>'+illus(byId('k1'))+'</div>';
+ const t=cs.map(c=>'<span>'+L(STAR.cats[c])+'</span>✦').join('')+'<span>'+tr('v1')+'</span>✦<span>3D</span>✦';band.innerHTML=t+t+t+t;
+ cats.innerHTML=cs.map(c=>{const p=STAR.products.find(x=>x.cat===c);return '<a class="cat" href="'+catPage[c]+'">'+(p.image?'<img src="'+p.image+'" alt="">':illus(p))+'<div class="tx"><h3>'+L(STAR.cats[c])+'</h3><span>'+STAR.products.filter(x=>x.cat===c).length+' '+tr('pieces')+'</span></div></a>'}).join('');
+ feat.innerHTML=['k1','s2','e1','c1','k3','c5'].map(i=>card(byId(i))).join('');demo()});</script></body></html>

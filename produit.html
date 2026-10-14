@@ -1,0 +1,159 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>STAR MENUISERIES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/extra.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head><body><div id="hdr"></div><div class="wrap" id="bk"></div>
+<div class="wrap pw">
+  <div class="stage" id="stage"><div id="photo"></div><div class="hint" id="hint"></div><div class="views" id="views"></div></div>
+  <div class="info">
+    <a id="back" style="color:var(--brass2);font-size:14px"></a>
+    <h1 id="pn"></h1><div class="price" id="pp"></div><p id="pd"></p><div class="dims" id="dm"></div>
+    <div class="opt"><h4><b id="l1" style="font-weight:500"></b><span id="n1"></span></h4><div class="sw" id="s1"></div></div>
+    <div class="opt"><h4><b id="l2" style="font-weight:500"></b><span id="n2"></span></h4><div class="sw" id="s2"></div></div>
+    <div class="opt"><h4><b id="l3" style="font-weight:500"></b></h4><div class="mats" id="s3"></div></div>
+    <div class="cta"><a class="btn solid" id="ord"></a><a class="btn wa" id="wab" target="_blank" rel="noopener">WhatsApp</a></div>
+  </div>
+</div>
+<div id="ftr"></div>
+<script src="js/data.js"></script><script src="js/art.js"></script><script src="js/app.js"></script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+const P = STAR.products.find(p=>p.id===qs('id')) || STAR.products[0];
+window.BACK=catPage[P.cat];
+const sel = {f:P.def.f, s:P.def.s, m:P.def.m};
+const [W,H,Dp] = P.dims;
+
+/* ---------- scène ---------- */
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+stage.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = pm.fromScene(new RoomEnvironment(),0.04).texture;
+const camera = new THREE.PerspectiveCamera(35,1,0.1,60);
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI*0.52; controls.minDistance=1; controls.maxDistance=12; controls.autoRotateSpeed=1.6;
+const sun = new THREE.DirectionalLight(0xfff1dc,2.2); sun.position.set(3,5,4); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4,near:.5,far:20}); sun.shadow.bias=-0.0004; scene.add(sun);
+const floor = new THREE.Mesh(new THREE.CircleGeometry(6,64), new THREE.ShadowMaterial({opacity:.45}));
+floor.rotation.x=-Math.PI/2; floor.receiveShadow=true; scene.add(floor);
+const ring = new THREE.Mesh(new THREE.RingGeometry(Math.max(W,Dp)*0.9,Math.max(W,Dp)*0.9+.012,96), new THREE.MeshBasicMaterial({color:0xb8975a}));
+ring.rotation.x=-Math.PI/2; ring.position.y=.002; scene.add(ring);
+
+/* ---------- matériaux ---------- */
+function grain(base,dark){
+  const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d');
+  g.fillStyle=base; g.fillRect(0,0,512,512);
+  for(let i=0;i<170;i++){ g.strokeStyle=dark; g.globalAlpha=Math.random()*.22+.04; g.lineWidth=Math.random()*2.2+.4;
+    g.beginPath(); const y=Math.random()*512, a=Math.random()*9+2, f=Math.random()*.02+.004, ph=Math.random()*6;
+    for(let x=0;x<=512;x+=8) g.lineTo(x, y+Math.sin(x*f+ph)*a); g.stroke(); }
+  const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=8; return t;
+}
+const GR=[null,grain('#f0dcb8','#7a5426'),grain('#a9825a','#2e1b0c')];
+function mk(hex){ const m=STAR.mats.find(x=>x.id===sel.m);
+  const o={color:hex,roughness:m.rough,metalness:m.metal}; if(m.grain)o.map=GR[m.grain]; return new THREE.MeshStandardMaterial(o); }
+const col = id => STAR.colors.find(c=>c.id===id).hex;
+
+/* ---------- modèle procédural ---------- */
+let model=null;
+function build(){
+  if(model){scene.remove(model);model.traverse(o=>{o.geometry?.dispose();});}
+  const G=new THREE.Group(), F=mk(col(sel.f)), S=mk(col(sel.s));
+  const gold=new THREE.MeshStandardMaterial({color:0xc9a35a,metalness:1,roughness:.25});
+  const stone=new THREE.MeshStandardMaterial({color:0x2a2a2c,roughness:.35,metalness:.1});
+  const cream=new THREE.MeshStandardMaterial({color:0xece4d4,roughness:.9});
+  const mirror=new THREE.MeshStandardMaterial({color:0xdfe6ea,metalness:1,roughness:.04});
+  const box=(w,h,d,x,y,z,m)=>{const me=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);me.position.set(x,y+h/2,z);me.castShadow=me.receiveShadow=true;G.add(me);return me;};
+  function cab(w,h,d,x,y,z,cols,rows){
+    box(w,h,d,x,y,z,S);
+    const dw=(w-.02)/cols, dh=(h-.02)/rows;
+    for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){
+      const cx=x-w/2+.01+dw*(c+.5), cy=y+.01+dh*r;
+      box(dw-.006,dh-.006,.022,cx,cy,z+d/2+.011,F);
+      if(rows>1) box(Math.min(.22,dw*.5),.012,.02,cx,cy+dh*.78,z+d/2+.03,gold);
+      else box(.012,Math.min(.2,dh*.4),.02,cx+(c%2===0?dw/2-.05:-dw/2+.05),cy+dh*(h>1.5?.5:.4),z+d/2+.03,gold);
+    }
+  }
+  if(P.type==='cuisine'){
+    const w=W,d=Dp,n=Math.round(w/.6);
+    box(w-.04,.1,d-.06,0,0,-.02,new THREE.MeshStandardMaterial({color:0x111111}));
+    cab(w,.74,d,0,.1,0,n,2);
+    box(w+.02,.04,d+.03,0,.84,.005,stone);
+    box(w,.55,.02,0,.88,-d/2+.01,stone);
+    const ww=(w-.9)/2, dd=.35;
+    [-1,1].forEach(s=>cab(ww,.7,dd,s*(w/2-ww/2),1.5,-d/2+dd/2,Math.max(1,Math.round(ww/.45)),1));
+    box(.8,.12,.4,0,1.75,-d/2+.2,gold); box(.3,.45,.3,0,1.87,-d/2+.15,gold);
+  } else if(P.type==='ilot'){
+    box(W-.04,.1,Dp-.06,0,0,0,new THREE.MeshStandardMaterial({color:0x111111})); cab(W,.74,Dp,0,.1,0,Math.round(W/.6),2); box(W+.04,.06,Dp+.06,0,.84,0,stone);
+    [-.3,0,.3].forEach(a=>{const x=a*W/.6*.45;box(.36,.05,.36,x,.62,Dp/2+.35,F);[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([i,j])=>box(.03,.62,.03,x+i*.14,0,Dp/2+.35+j*.14,gold));});
+  } else if(P.type==='shelf'){
+    box(.03,H,Dp,-W/2+.015,0,0,S); box(.03,H,Dp,W/2-.015,0,0,S); box(W,H,.02,0,0,-Dp/2+.01,S);
+    const bc=[0x8a2b3c,0x2c4a7a,0xc9a35a,0x5f7f5f,0xe8dcc4];
+    for(let i=0;i<5;i++){const y=i*(H-.03)/4; box(W-.06,.03,Dp-.02,0,y,0,F);
+      if(i<4)for(let j=0;j<Math.floor(W/.07);j++)if((i+j)%3){const bh=.18+((j*7+i*5)%16)/100; box(.045,bh,.22,-W/2+.07+j*.07,y+.03,-Dp/2+.16,new THREE.MeshStandardMaterial({color:bc[(i+j)%5],roughness:.7}));}}
+  } else if(P.type==='table'){
+    box(W,.04,Dp,0,H-.04,0,F); box(W-.2,.03,Dp-.2,0,.12,0,S);
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.04,H-.04,.04,a*(W/2-.06),0,b*(Dp/2-.06),gold));
+  } else if(P.type==='bench'){
+    box(W,.08,Dp,0,H-.08,0,cream); box(W,.05,Dp,0,H-.13,0,F);
+    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.04,H-.13,.04,a*(W/2-.05),0,b*(Dp/2-.05),gold));
+  } else if(P.type==='rack'){
+    box(W,H,.03,0,0,-Dp/2,F); box(W,.04,.15,0,H-.1,-Dp/2+.09,S);
+    for(let i=0;i<5;i++)box(.025,.025,.08,-W/2+W*(i+.5)/5,H*.72,-Dp/2+.05,gold);
+    cab(W,.42,Dp,0,0,0,2,1); box(W,.06,Dp,0,.42,0,cream);
+  } else if(P.type==='bed'){
+    box(W,.3,Dp,0,.12,0,S); box(W-.08,.24,Dp-.12,0,.42,.04,cream);
+    box(W+.1,H,.14,0,.05,-Dp/2-.04,F); box(W+.1,.03,.16,0,H+.05,-Dp/2-.04,gold);
+    [-1,1].forEach(s=>{box(W*.38,.14,.34,s*W*.22,.66,-Dp/2+.3,cream); cab(.5,.46,.4,s*(W/2+.38),.16,-Dp/2+.1,1,1);
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.03,.16,.03,s*(W/2+.38)+a*.22,0,-Dp/2+.1+b*.17,gold));});
+  } else {
+    const leg=P.legs?.12:.05;
+    cab(W,H-leg,Dp,0,leg,0,P.cols,P.rows);
+    if(P.legs)[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>box(.04,leg,.04,a*(W/2-.08),0,b*(Dp/2-.05),gold));
+    if(P.mirror){ box(W*.86,1.0,.03,0,H+.12,-Dp/2+.02,gold); box(W*.86-.06,.94,.035,0,H+.15,-Dp/2+.025,mirror); }
+  }
+  model=G; scene.add(G);
+}
+
+/* ---------- caméra / vues ---------- */
+const bb=Math.max(W,H*(P.mirror?1.9:1),Dp), dist=bb*2.1+1, ty=(P.mirror?H*1.1:H)/2;
+function view(v){
+  const m={front:[0,ty,dist],side:[dist,ty,0],top:[0,dist*1.15,.01],back:[0,ty,-dist],iso:[dist*.75,ty+bb*.55,dist*.75]};
+  camera.position.set(...m[v]); controls.target.set(0,ty,0); controls.update();
+}
+function resize(){const r=stage.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(stage); resize(); view('iso');
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
+
+/* ---------- interface ---------- */
+const sw=(id,key)=>{document.getElementById(id).innerHTML=STAR.colors.map(c=>
+  `<button title="${L(c)}" aria-label="${L(c)}" class="${sel[key]===c.id?'on':''}" style="background:${c.hex}" data-k="${key}" data-v="${c.id}"></button>`).join('');};
+function ui(){
+  pn.textContent=L(P.name); pp.textContent=tr('from')+' '+price(P.price); pd.textContent=L(P.desc);
+  dm.textContent=tr('dims')+' : '+(W*100|0)+' × '+(H*100|0)+' × '+(Dp*100|0)+' cm';
+  back.textContent='← '+L(STAR.cats[P.cat]); back.href=catPage[P.cat];
+  l1.textContent=tr('facade'); l2.textContent=tr('sides'); l3.textContent=tr('mat');
+  n1.textContent=L(STAR.colors.find(c=>c.id===sel.f)); n2.textContent=L(STAR.colors.find(c=>c.id===sel.s));
+  sw('s1','f'); sw('s2','s');
+  s3.innerHTML=STAR.mats.map(m=>`<button class="${sel.m===m.id?'on':''}" data-k="m" data-v="${m.id}">${L(m)}</button>`).join('');
+  hint.textContent=tr('drag'); photo.innerHTML=P.image?`<img src="${P.image}" alt="">`:illus(P,sel);
+  views.innerHTML=`<button data-t="3d" class="${stage.classList.contains('ph')?'':'on'}">3D</button><button data-t="photo" class="${stage.classList.contains('ph')?'on':''}">${tr('photo')}</button>`+['front','side','top','back','iso'].map(v=>`<button data-view="${v}">${tr(v)}</button>`).join('')+`<button id="rot" class="${controls.autoRotate?'on':''}">${tr('auto')}</button>`;
+  ord.textContent=tr('order'); ord.href=`commande.html?id=${P.id}&f=${sel.f}&s=${sel.s}&m=${sel.m}`;
+  wab.href=waLink(tr('wa_prod')+' '+L(P.name)+' ('+L(STAR.colors.find(c=>c.id===sel.f))+' / '+L(STAR.colors.find(c=>c.id===sel.s))+', '+L(STAR.mats.find(m=>m.id===sel.m))+')');
+  document.title=L(P.name)+' — STAR MENUISERIES';
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.t){stage.classList.toggle('ph',b.dataset.t==='photo');ui();}
+  else if(b.dataset.k){sel[b.dataset.k]=b.dataset.v;build();ui();}
+  else if(b.dataset.view){view(b.dataset.view);controls.autoRotate=false;ui();}
+  else if(b.id==='rot'){controls.autoRotate=!controls.autoRotate;ui();}
+});
+build(); boot(ui);
+</script></body></html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>STAR MENUISERIES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/extra.css"></head><body><div id="hdr"></div><div class="wrap" id="bk"></div>
+<div class="pagehead"><div class="wrap"><h1 data-i18n="order_t"></h1></div></div>
+<div class="wrap fw"><div class="box"><h3 data-i18n="summary"></h3><div class="sum" id="sum"></div></div>
+<div class="box"><form id="f" onsubmit="return go(event)">
+<label><span data-i18n="name"></span><input name="n" required></label>
+<div class="two"><label><span data-i18n="phone"></span><input name="t" type="tel" required></label><label><span data-i18n="email"></span><input name="e" type="email" required></label></div>
+<label><span data-i18n="addr"></span><input name="a" required></label>
+<div class="two"><label><span data-i18n="city"></span><input name="v" required></label><label><span data-i18n="country"></span><select name="c"><option>France</option><option>Algérie / الجزائر</option><option>Autre</option></select></label></div>
+<label><span data-i18n="qty"></span><input name="q" type="number" min="1" value="1" oninput="draw()"></label>
+<label><span data-i18n="notes"></span><textarea name="o" rows="3"></textarea></label>
+<div class="cta" style="margin-top:6px"><button class="btn solid" type="submit" data-i18n="send_mail"></button><button class="btn wa" type="button" onclick="wa()" data-i18n="send_wa"></button></div>
+<div class="ok" id="ok" data-i18n="sent"></div></form></div></div>
+<div id="ftr"></div><script src="js/data.js"></script><script src="js/art.js"></script><script src="js/app.js"></script>
+<script>
+const P=STAR.products.find(p=>p.id===qs('id'))||STAR.products[0];
+const sel={f:qs('f')||P.def.f,s:qs('s')||P.def.s,m:qs('m')||P.def.m};
+const nm=(arr,id)=>L(arr.find(x=>x.id===id)||arr[0]);
+function qty(){return Math.max(1,+f.q.value||1)}
+function draw(){sum.innerHTML=[[tr('model'),L(P.name)],[tr('facade'),nm(STAR.colors,sel.f)],[tr('sides'),nm(STAR.colors,sel.s)],[tr('mat'),nm(STAR.mats,sel.m)],[tr('qty'),qty()]]
+ .map(r=>'<div><span>'+r[0]+'</span><span>'+r[1]+'</span></div>').join('')+'<div class="tot"><span>'+tr('total')+'</span><span>'+price(P.price*qty())+'</span></div>'}
+function text(){const d=new FormData(f);return 'COMMANDE STAR MENUISERIES\n\nModèle: '+P.name.fr+' ('+P.id+')\nFaçades: '+nm(STAR.colors,sel.f)+'\nCôtés: '+nm(STAR.colors,sel.s)+'\nMatière: '+nm(STAR.mats,sel.m)+'\nQuantité: '+qty()+'\nTotal: '+price(P.price*qty())+'\n\nNom: '+d.get('n')+'\nTél: '+d.get('t')+'\nEmail: '+d.get('e')+'\nAdresse: '+d.get('a')+', '+d.get('v')+', '+d.get('c')+'\nNotes: '+d.get('o')}
+function go(ev){ev.preventDefault();ok.style.display='block';location.href='mailto:'+STAR.email+'?subject='+encodeURIComponent('Commande — '+P.name.fr)+'&body='+encodeURIComponent(text());return false}
+function wa(){if(!f.reportValidity())return;window.open(waLink(text()),'_blank')}
+boot(draw);
+</script></body></html>

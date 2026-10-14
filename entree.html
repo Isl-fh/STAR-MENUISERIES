@@ -1,0 +1,8 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>STAR MENUISERIES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600&family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/extra.css"></head><body><div id="hdr"></div><div class="wrap" id="bk"></div>
+<div class="pagehead"><div class="wrap"><h1 id="h"></h1><p id="sub"></p></div></div>
+<section class="s"><div class="wrap"><div class="grid" id="g"></div></div></section>
+<div id="ftr"></div><script src="js/data.js"></script><script src="js/art.js"></script><script src="js/app.js"></script>
+<script>const CAT='entree';boot(()=>{h.textContent=L(STAR.cats[CAT]);sub.textContent=L(STAR.cats[CAT].sub);document.title=L(STAR.cats[CAT])+' — STAR MENUISERIES';
+ g.innerHTML=STAR.products.filter(p=>p.cat===CAT).map(card).join('')||tr('none');});</script></body></html>
